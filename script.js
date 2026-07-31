@@ -121,17 +121,17 @@ function socialDockHTML() {
     </a>`;
 }
 
-function toolItemHTML(tool) {
+function toolItemHTML(tool, index) {
   return `
-    <div class="tool-item">
+    <div class="tool-item" style="--i:${index}">
       <div class="tool-icon"><span>${tool.abbr}</span></div>
       <span class="tool-name">${tool.name}</span>
     </div>`;
 }
 
-function projectCardHTML(proj) {
+function projectCardHTML(proj, index) {
   return `
-    <a href="${proj.url}" target="_blank" rel="noopener" class="project-card-link">
+    <a href="${proj.url}" target="_blank" rel="noopener" class="project-card-link" style="--i:${index}">
       <div class="project-card-wrap">
         <div class="project-card-tab"></div>
         <div class="project-card">
@@ -163,6 +163,222 @@ function renderComponents() {
   if (worksGrid) worksGrid.innerHTML = PROJECTS.map(projectCardHTML).join('');
 }
 
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- Boot sequence ----------
+
+function initBootScreen() {
+  const screen = document.getElementById('boot-screen');
+  const textEl = document.getElementById('boot-text');
+  if (!screen || !textEl) return;
+
+  if (REDUCED_MOTION) {
+    screen.classList.add('boot-hidden');
+    return;
+  }
+
+  const lines = [
+    '> booting noor_os v2.6...',
+    '> loading portfolio modules... done',
+    '> mounting C:\\NOOR\\ ... ok',
+    '> welcome, visitor.'
+  ];
+
+  let hidden = false;
+  const hide = () => {
+    if (hidden) return;
+    hidden = true;
+    screen.classList.add('boot-hidden');
+    document.removeEventListener('keydown', hide);
+    screen.removeEventListener('click', hide);
+  };
+
+  screen.addEventListener('click', hide);
+  document.addEventListener('keydown', hide);
+
+  let out = '';
+  let li = 0;
+  let ci = 0;
+
+  function typeNext() {
+    if (hidden) return;
+    if (li >= lines.length) {
+      setTimeout(hide, 500);
+      return;
+    }
+    const line = lines[li];
+    if (ci < line.length) {
+      out += line[ci];
+      ci += 1;
+      textEl.textContent = out;
+      setTimeout(typeNext, 16);
+    } else {
+      out += '\n';
+      li += 1;
+      ci = 0;
+      textEl.textContent = out;
+      setTimeout(typeNext, 120);
+    }
+  }
+
+  typeNext();
+}
+
+// ---------- Hero typewriter ----------
+
+function initTypewriter() {
+  const target = document.getElementById('wordmark-type');
+  if (!target) return;
+  const text = 'Noor Fatima — Software Engineer';
+
+  if (REDUCED_MOTION) {
+    target.textContent = text;
+    return;
+  }
+
+  let i = 0;
+  function type() {
+    if (i <= text.length) {
+      target.textContent = text.slice(0, i);
+      i += 1;
+      setTimeout(type, 45);
+    }
+  }
+  setTimeout(type, 900);
+}
+
+// ---------- Ticker ----------
+
+function initTicker() {
+  const track = document.getElementById('ticker-track');
+  if (!track) return;
+  const items = [
+    'AVAILABLE FOR OPPORTUNITIES',
+    'SOFTWARE ENGINEER',
+    'AI &amp; COMPUTER VISION',
+    'FULL-STACK DEVELOPER',
+    'ALWAYS SHIPPING'
+  ];
+  const chunk = items.map((t) => `<span>${t}</span>&bull;`).join('');
+  track.innerHTML = chunk + chunk;
+}
+
+// ---------- Custom cursor ----------
+
+function initCustomCursor() {
+  const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const ring = document.getElementById('cursor-ring');
+  const dot = document.getElementById('cursor-dot');
+  if (!canHover || REDUCED_MOTION || !ring || !dot) return;
+
+  document.body.classList.add('custom-cursor-on');
+
+  let ringX = window.innerWidth / 2;
+  let ringY = window.innerHeight / 2;
+  let targetX = ringX;
+  let targetY = ringY;
+
+  document.addEventListener('mousemove', (e) => {
+    targetX = e.clientX;
+    targetY = e.clientY;
+    dot.style.left = `${targetX}px`;
+    dot.style.top = `${targetY}px`;
+    document.body.classList.add('cursor-ready');
+  });
+
+  function raf() {
+    ringX += (targetX - ringX) * 0.2;
+    ringY += (targetY - ringY) * 0.2;
+    ring.style.left = `${ringX}px`;
+    ring.style.top = `${ringY}px`;
+    requestAnimationFrame(raf);
+  }
+  requestAnimationFrame(raf);
+
+  const hoverSelector = 'a, button, .icon-item, .dock-icon, .btn, .window-close, .project-card-link';
+  document.addEventListener('mouseover', (e) => {
+    if (e.target.closest(hoverSelector)) ring.classList.add('cursor-hover');
+  });
+  document.addEventListener('mouseout', (e) => {
+    if (e.target.closest(hoverSelector)) ring.classList.remove('cursor-hover');
+  });
+}
+
+// ---------- Project card tilt ----------
+
+function initTilt() {
+  const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (!canHover || REDUCED_MOTION) return;
+
+  document.addEventListener('mousemove', (e) => {
+    const card = e.target.closest('.project-card-link');
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    const inner = card.querySelector('.project-card');
+    if (inner) {
+      inner.style.transform = `rotateX(${py * -10}deg) rotateY(${px * 10}deg) translateZ(6px)`;
+    }
+  });
+
+  document.addEventListener(
+    'mouseleave',
+    (e) => {
+      if (!e.target.classList || !e.target.classList.contains('project-card-link')) return;
+      const inner = e.target.querySelector('.project-card');
+      if (inner) inner.style.transform = '';
+    },
+    true
+  );
+}
+
+// ---------- Scroll-spy active nav ----------
+
+function initScrollSpy() {
+  const sectionIds = ['about', 'works', 'contact'];
+  const sections = sectionIds
+    .map((id) => document.getElementById(id))
+    .filter(Boolean);
+  if (!sections.length || !('IntersectionObserver' in window)) return;
+
+  const setActive = (id) => {
+    document.querySelectorAll('.icon-item').forEach((el) => {
+      const match = el.getAttribute('href') === `#${id}`;
+      el.classList.toggle('active', match);
+    });
+  };
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) setActive(entry.target.id);
+      });
+    },
+    { rootMargin: '-40% 0px -50% 0px', threshold: 0 }
+  );
+
+  sections.forEach((s) => observer.observe(s));
+}
+
+// ---------- Button ripple ----------
+
+function initRipple() {
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn');
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    const size = Math.max(rect.width, rect.height);
+    ripple.className = 'btn-ripple';
+    ripple.style.width = ripple.style.height = `${size}px`;
+    ripple.style.left = `${e.clientX - rect.left - size / 2}px`;
+    ripple.style.top = `${e.clientY - rect.top - size / 2}px`;
+    btn.appendChild(ripple);
+    ripple.addEventListener('animationend', () => ripple.remove());
+  });
+}
+
 // ---------- Scroll-in animation ----------
 
 function initScrollAnimation() {
@@ -188,4 +404,11 @@ function initScrollAnimation() {
 document.addEventListener('DOMContentLoaded', () => {
   renderComponents();
   initScrollAnimation();
+  initBootScreen();
+  initTypewriter();
+  initTicker();
+  initCustomCursor();
+  initTilt();
+  initScrollSpy();
+  initRipple();
 });
