@@ -13,12 +13,22 @@
 <body>
 
 <div class="boot-screen" id="boot-screen" aria-hidden="true">
-  <pre class="boot-text" id="boot-text"></pre>
-  <p class="boot-skip">click / press any key to skip</p>
+  <div class="boot-window">
+    <div class="boot-titlebar">
+      <span>C:\NOOR\boot.exe</span>
+      <span class="window-close" id="boot-close">X</span>
+    </div>
+    <div class="boot-body">
+      <div class="boot-logo">N</div>
+      <div class="boot-bar-track"><div class="boot-bar-fill" id="boot-bar-fill"></div></div>
+      <div class="boot-meta">
+        <span id="boot-status">booting</span>
+        <span id="boot-pct">0%</span>
+      </div>
+    </div>
+  </div>
+  <p class="boot-skip">click anywhere or press any key to skip</p>
 </div>
-
-<div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
-<div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
 
 <header class="hero">
   <div class="grid-hero">
@@ -34,10 +44,6 @@
   </div>
 </header>
 
-<div class="ticker-wrap">
-  <div class="ticker-track" id="ticker-track"></div>
-</div>
-
 <div class="dock-wrap"><div class="social-dock"></div></div>
 
 <section id="about" class="section">
@@ -49,7 +55,7 @@
       <span class="window-close">X</span>
     </div>
     <div class="window-body about-body">
-      <img class="profile-photo" src="assets/profile-photo.webp" alt="Noor Fatima portrait">
+      <img class="profile-photo" src="assets/profile-photo.jpg" alt="Noor Fatima portrait" width="180" height="180">
       <div class="about-text">
         <p class="about-greeting">hi! i'm</p>
         <p class="about-name">Noor Fatima</p>

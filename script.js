@@ -169,19 +169,21 @@ const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').mat
 
 function initBootScreen() {
   const screen = document.getElementById('boot-screen');
-  const textEl = document.getElementById('boot-text');
-  if (!screen || !textEl) return;
+  const fill = document.getElementById('boot-bar-fill');
+  const status = document.getElementById('boot-status');
+  const pct = document.getElementById('boot-pct');
+  if (!screen) return;
 
   if (REDUCED_MOTION) {
     screen.classList.add('boot-hidden');
     return;
   }
 
-  const lines = [
-    '> booting noor_os v2.6...',
-    '> loading portfolio modules... done',
-    '> mounting C:\\NOOR\\ ... ok',
-    '> welcome, visitor.'
+  const steps = [
+    { p: 25, label: 'loading assets' },
+    { p: 55, label: 'rendering ui' },
+    { p: 85, label: 'linking projects' },
+    { p: 100, label: 'ready' }
   ];
 
   let hidden = false;
@@ -196,32 +198,22 @@ function initBootScreen() {
   screen.addEventListener('click', hide);
   document.addEventListener('keydown', hide);
 
-  let out = '';
-  let li = 0;
-  let ci = 0;
-
-  function typeNext() {
+  let i = 0;
+  function tick() {
     if (hidden) return;
-    if (li >= lines.length) {
-      setTimeout(hide, 500);
+    if (i >= steps.length) {
+      setTimeout(hide, 350);
       return;
     }
-    const line = lines[li];
-    if (ci < line.length) {
-      out += line[ci];
-      ci += 1;
-      textEl.textContent = out;
-      setTimeout(typeNext, 16);
-    } else {
-      out += '\n';
-      li += 1;
-      ci = 0;
-      textEl.textContent = out;
-      setTimeout(typeNext, 120);
-    }
+    const step = steps[i];
+    if (fill) fill.style.width = `${step.p}%`;
+    if (pct) pct.textContent = `${step.p}%`;
+    if (status) status.textContent = step.label;
+    i += 1;
+    setTimeout(tick, 350);
   }
 
-  typeNext();
+  tick();
 }
 
 // ---------- Hero typewriter ----------
@@ -245,63 +237,6 @@ function initTypewriter() {
     }
   }
   setTimeout(type, 900);
-}
-
-// ---------- Ticker ----------
-
-function initTicker() {
-  const track = document.getElementById('ticker-track');
-  if (!track) return;
-  const items = [
-    'AVAILABLE FOR OPPORTUNITIES',
-    'SOFTWARE ENGINEER',
-    'AI &amp; COMPUTER VISION',
-    'FULL-STACK DEVELOPER',
-    'ALWAYS SHIPPING'
-  ];
-  const chunk = items.map((t) => `<span>${t}</span>&bull;`).join('');
-  track.innerHTML = chunk + chunk;
-}
-
-// ---------- Custom cursor ----------
-
-function initCustomCursor() {
-  const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  const ring = document.getElementById('cursor-ring');
-  const dot = document.getElementById('cursor-dot');
-  if (!canHover || REDUCED_MOTION || !ring || !dot) return;
-
-  document.body.classList.add('custom-cursor-on');
-
-  let ringX = window.innerWidth / 2;
-  let ringY = window.innerHeight / 2;
-  let targetX = ringX;
-  let targetY = ringY;
-
-  document.addEventListener('mousemove', (e) => {
-    targetX = e.clientX;
-    targetY = e.clientY;
-    dot.style.left = `${targetX}px`;
-    dot.style.top = `${targetY}px`;
-    document.body.classList.add('cursor-ready');
-  });
-
-  function raf() {
-    ringX += (targetX - ringX) * 0.2;
-    ringY += (targetY - ringY) * 0.2;
-    ring.style.left = `${ringX}px`;
-    ring.style.top = `${ringY}px`;
-    requestAnimationFrame(raf);
-  }
-  requestAnimationFrame(raf);
-
-  const hoverSelector = 'a, button, .icon-item, .dock-icon, .btn, .window-close, .project-card-link';
-  document.addEventListener('mouseover', (e) => {
-    if (e.target.closest(hoverSelector)) ring.classList.add('cursor-hover');
-  });
-  document.addEventListener('mouseout', (e) => {
-    if (e.target.closest(hoverSelector)) ring.classList.remove('cursor-hover');
-  });
 }
 
 // ---------- Project card tilt ----------
@@ -406,8 +341,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollAnimation();
   initBootScreen();
   initTypewriter();
-  initTicker();
-  initCustomCursor();
   initTilt();
   initScrollSpy();
   initRipple();
